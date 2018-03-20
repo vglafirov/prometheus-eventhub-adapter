@@ -1,0 +1,31 @@
+## number of exporter instances
+##
+replicaCount: 1
+
+## restart policy for all containers
+##
+restartPolicy: Always
+
+image:
+  repository: azurets.azurecr.io/prometheus-azure-timeseries-adapter
+  tag: latest
+  pullPolicy: Always
+  pullSecret: azurets-acr
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 100m
+    memory: 128Mi
+
+service:
+  type: ClusterIP
+  externalPort: 9201
+
+eventHub:
+  name: "lab1-hub1"
+  namespace: "lab1-eh1"
+  policyName: default
+  policyKey: secret

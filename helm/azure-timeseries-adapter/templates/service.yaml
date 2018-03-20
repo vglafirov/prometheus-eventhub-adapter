@@ -1,0 +1,15 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ template "azure-timeseries-adapter.fullname" . }}
+  labels:
+    app: {{ .Chart.Name }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.service.externalPort }}
+      targetPort: {{ .Values.service.externalPort }}
+      protocol: TCP
+  selector:
+    app: {{ .Chart.Name }}

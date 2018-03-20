@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    app: {{ .Chart.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/go/bin/prometheus-azure-timeseries-adapter"]
+          args:
+          - -eventhub-name
+          - {{ .Values.eventHub.name }}
+          - -eventhub-namespace
+          - {{ .Values.eventHub.namespace }}
+          - -eventhub-policy-name
+          - {{ .Values.eventHub.policyName }}
+          - -eventhub-policy-key
+          - {{ .Values.eventHub.policyKey }}
+          - -web.listen-address
+          - {{ .Values.service.externalPort | quote}}
+          - loglevel
+          - {{ .Values.service.externalPort | default "DEBUG" | quote}}
+          ports:
+            - containerPort: {{ .Values.service.externalPort }}
+              name: http
+          resources:
+{{ toYaml .Values.resources | indent 13 }}
+      imagePullSecrets:
+      - name: {{ .Values.image.pullSecret }}
