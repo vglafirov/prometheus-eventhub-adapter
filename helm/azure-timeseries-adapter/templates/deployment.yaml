@@ -33,13 +33,21 @@ spec:
           - -eventhub-policy-key
           - {{ .Values.eventHub.policyKey }}
           - -web.listen-address
-          - {{ .Values.service.externalPort | quote}}
-          - loglevel
-          - {{ .Values.service.externalPort | default "DEBUG" | quote}}
+          - :{{ .Values.service.externalPort }}
+          - -loglevel
+          - {{ .Values.service.loglevel | default "DEBUG" | quote}}
           ports:
             - containerPort: {{ .Values.service.externalPort }}
               name: http
-          resources:
-{{ toYaml .Values.resources | indent 13 }}
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.service.externalPort }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.service.externalPort }}
+            initialDelaySeconds: 15
+            periodSeconds: 20
       imagePullSecrets:
       - name: {{ .Values.image.pullSecret }}

@@ -17,8 +17,8 @@ resources:
     cpu: 100m
     memory: 128Mi
   limits:
-    cpu: 100m
-    memory: 128Mi
+    cpu: 500m
+    memory: 1Gi
 
 service:
   type: ClusterIP
@@ -27,5 +27,5 @@ service:
 eventHub:
   name: "lab1-hub1"
   namespace: "lab1-eh1"
-  policyName: default
+  policyName: RootManageSharedAccessKey
   policyKey: secret

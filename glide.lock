@@ -1,10 +1,18 @@
-hash: cdff04ad36c81c02ec028bf041a12df59dce621cf249a4ed625e74f9483fdf93
-updated: 2018-03-20T22:55:46.100901+01:00
+hash: 0a63dabc600784390d7b6fb0e0cd019aa9123b6afea4c51caee0eb6fe9d8ad2f
+updated: 2018-03-24T21:41:24.887284+01:00
 imports:
+- name: github.com/Azure/go-autorest
+  version: 7909b98056dd6f6a9fc9b7745af1810c93c15939
+  subpackages:
+  - autorest
+  - autorest/adal
+  - autorest/date
 - name: github.com/beorn7/perks
   version: 4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9
   subpackages:
   - quantile
+- name: github.com/dgrijalva/jwt-go
+  version: 06ea1031745cb8b3dab3f6a236daf2b0aa468b7e
 - name: github.com/go-kit/kit
   version: ca4112baa34cb55091301bdc13b1420a122b1b9e
   subpackages:
@@ -43,17 +51,16 @@ imports:
   - runtime
   - runtime/internal
   - utilities
+- name: github.com/KirillSleta/go-eventhub
+  version: 2ad9471bb81577893b7d1953f1a2fb0131f1e3b8
+  subpackages:
+  - eventhub
 - name: github.com/kr/logfmt
   version: b84e30acd515aadc4b783ad4ff83aff3299bdfe0
 - name: github.com/matttproud/golang_protobuf_extensions
   version: c12348ce28de40eed0136aa2b644d0ee0650e56c
   subpackages:
   - pbutil
-- name: github.com/openenergi/go-event-hub
-  version: 3a4e805698a759d2519326fccf7c8e22173ed46d
-  subpackages:
-  - eventhub
-  - msauth
 - name: github.com/pkg/errors
   version: 816c9085562cd7ee03e7f8188a1cfd942858cded
 - name: github.com/prometheus/client_golang
@@ -128,10 +135,4 @@ imports:
   - status
   - tap
   - transport
-- name: qpid.apache.org
-  version: b25d21e6779a011e972a5f00e433e2034b793da1
-  subpackages:
-  - amqp
-  - electron
-  - proton
 testImports: []

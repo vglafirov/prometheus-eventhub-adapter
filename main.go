@@ -16,10 +16,12 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -84,25 +86,6 @@ func init() {
 	prometheus.MustRegister(sentBatchDuration)
 }
 
-func main() {
-	cfg := parseFlags()
-	http.Handle(cfg.telemetryPath, prometheus.Handler())
-
-	logLevel := promlog.AllowedLevel{}
-	logLevel.Set(cfg.logLevel)
-
-	logger := promlog.New(logLevel)
-
-	level.Info(logger).Log("Bootstapping..")
-
-	writers, err := buildClients(logger, cfg)
-	if err != nil {
-		level.Error(logger).Log("Failed to bootstrap")
-	}
-	level.Info(logger).Log("Finished bootstrap process.")
-	serve(logger, cfg.listenAddr, writers)
-}
-
 func parseFlags() *config {
 	cfg := &config{}
 
@@ -122,7 +105,7 @@ func parseFlags() *config {
 		"Azure EventHub policy key",
 	)
 
-	flag.StringVar(&cfg.logLevel, "loglevel", "debug",
+	flag.StringVar(&cfg.logLevel, "loglevel", "info",
 		"Azure EventHub policy key",
 	)
 
@@ -144,25 +127,21 @@ type writer interface {
 }
 
 func buildClients(logger log.Logger, cfg *config) ([]writer, error) {
-	level.Info(logger).Log("Creating writer with parameters %s", cfg)
 	var writers []writer
+	level.Info(logger).Log("msg", "Creating client", "method", "buildClients")
 	c, err := azurets.NewClient(
 		cfg.eventhubName,
 		cfg.eventhubNamespace,
 		cfg.sasPolicyName,
 		cfg.sasPolicyKey,
-		cfg.tokenExpiryInterval,
 		cfg.logLevel,
 		log.With(logger, "storage", "AzureTS"))
 	if err != nil {
-		level.Error(logger).Log("Cannot create azurets cli")
+		level.Error(logger).Log("msg", "Cannot create azurets cli", "err", err.Error())
 		return nil, err
 	}
 	writers = append(writers, c)
-
-	prometheus.MustRegister(c)
-	writers = append(writers, c)
-	level.Info(logger).Log("Starting up...")
+	level.Info(logger).Log("msg", "Finished creating clients", "method", "buildClients")
 	return writers, nil
 }
 
@@ -228,10 +207,32 @@ func sendSamples(logger log.Logger, w writer, samples model.Samples) {
 	begin := time.Now()
 	err := w.Write(samples)
 	duration := time.Since(begin).Seconds()
+	level.Info(logger).Log("msg", fmt.Sprintf("Wrote %v samples to EventHub", len(samples)), "method", "sendSamples", "duration", duration)
 	if err != nil {
 		level.Warn(logger).Log("msg", "Error sending samples to remote storage", "err", err, "storage", w.Name(), "num_samples", len(samples))
 		failedSamples.WithLabelValues(w.Name()).Add(float64(len(samples)))
 	}
 	sentSamples.WithLabelValues(w.Name()).Add(float64(len(samples)))
 	sentBatchDuration.WithLabelValues(w.Name()).Observe(duration)
+}
+
+func main() {
+	cfg := parseFlags()
+	http.Handle(cfg.telemetryPath, prometheus.Handler())
+
+	logLevel := promlog.AllowedLevel{}
+	logLevel.Set(strings.ToLower(cfg.logLevel))
+
+	logger := promlog.New(logLevel)
+
+	log.With(logger, "storage", "AzureTS")
+
+	level.Info(logger).Log("msg", "Bootstraping", "method", "main", "namespace", cfg.eventhubNamespace, "name", cfg.eventhubName)
+
+	writers, err := buildClients(logger, cfg)
+	if err != nil {
+		level.Error(logger).Log("msg", "Failed to bootstrap", "method", "main")
+	}
+	level.Info(logger).Log("msg", "Start serving the requests", "method", "main", "listerAddr", cfg.listenAddr)
+	serve(logger, cfg.listenAddr, writers)
 }

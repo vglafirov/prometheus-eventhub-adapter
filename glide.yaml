@@ -1,11 +1,6 @@
 package: github.com/vglafirov/prometheus-azure-timeseries-adapter
 import:
 - package: "github.com/google/uuid"
-- package: "qpid.apache.org/amqp"
-  version: go1
-- package: "qpid.apache.org/electron"
-  version: go1
-- package: "github.com/openenergi/go-event-hub/eventhub"
 - package: "github.com/go-kit/kit/log"
 - package: "google.golang.org/grpc"
 - package: "github.com/gogo/protobuf/proto"
@@ -13,3 +8,5 @@ import:
 - package: "github.com/prometheus/common"
 - package: "github.com/prometheus/client_golang/prometheus"
 - package: "github.com/prometheus/prometheus/prompb"
+- package: "github.com/Azure/go-autorest/autorest"
+- package: "github.com/KirillSleta/go-eventhub"

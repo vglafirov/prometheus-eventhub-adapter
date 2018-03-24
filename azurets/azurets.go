@@ -2,19 +2,21 @@ package azurets
 
 import (
 	"encoding/json"
-	"strings"
+	"strconv"
 	"time"
 
 	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 
-	"github.com/openenergi/go-event-hub/eventhub"
+	"github.com/KirillSleta/go-eventhub/eventhub"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 )
 
 // Client Azure EventHub client definition
 type Client struct {
-	Sender         eventhub.Sender
+	Sender         eventhub.EventHubClient
+	HubName        string
 	Logger         log.Logger
 	ignoredSamples prometheus.Counter
 }
@@ -25,34 +27,15 @@ func NewClient(
 	namespace string,
 	sasPolicyName string,
 	sasPolicyKey string,
-	tokenExpiryInterval time.Duration,
 	logLevel string,
 	logger log.Logger) (cli *Client, err error) {
-	var debug bool
-	if strings.ToLower(logLevel) == "debug" {
-		debug = true
-	} else {
-		debug = false
-	}
-	if logger == nil {
-		logger = log.NewNopLogger()
-	}
-	sender, err := eventhub.NewSender(eventhub.SenderOpts{
-		EventHubNamespace:   namespace,
-		EventHubName:        name,
-		SasPolicyName:       sasPolicyName,
-		SasPolicyKey:        sasPolicyKey,
-		TokenExpiryInterval: tokenExpiryInterval,
-		Debug:               debug,
-	})
 
-	if err != nil {
-		return nil, err
-	}
+	sender := eventhub.NewEventHubClient(1, namespace, sasPolicyName, sasPolicyKey)
 
 	return &Client{
-		Sender: sender,
-		Logger: logger,
+		Sender:  sender,
+		HubName: name,
+		Logger:  logger,
 		ignoredSamples: prometheus.NewCounter(
 			prometheus.CounterOpts{
 				Name: "prometheus_azurets_ignored_samples_total",
@@ -65,9 +48,23 @@ func NewClient(
 // Write sends a batch of samples to Azure EventHub.
 func (c *Client) Write(samples model.Samples) error {
 	for _, s := range samples {
-		m, _ := json.Marshal(s)
-		_, err := c.Sender.Send(string(m))
+		t := model.Time.Time(s.Timestamp)
+		message := make(map[string]string)
+		message["Timestamp"] = t.Format(time.RFC3339)
+		for key, value := range s.Metric {
+			message[string(key)] = string(value)
+		}
+		message["Value"] = strconv.FormatFloat(float64(s.Value), 'f', -1, 64)
+		m, err := json.Marshal(message)
 		if err != nil {
+			level.Error(c.Logger).Log("msg", "Cannot marshal incoming message", "err", err.Error())
+			return err
+		}
+
+		level.Debug(c.Logger).Log("msg", "Message", "payload", string(m))
+		err = c.Sender.Send(c.HubName, &eventhub.Message{Body: m})
+		if err != nil {
+			level.Error(c.Logger).Log("msg", "Cannot send metrics", "err", err.Error())
 			return err
 		}
 	}
