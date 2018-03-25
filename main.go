@@ -233,6 +233,11 @@ func main() {
 	if err != nil {
 		level.Error(logger).Log("msg", "Failed to bootstrap", "method", "main")
 	}
+
 	level.Info(logger).Log("msg", "Start serving the requests", "method", "main", "listerAddr", cfg.listenAddr)
-	serve(logger, cfg.listenAddr, writers)
+
+	err = serve(logger, cfg.listenAddr, writers)
+	if err != nil {
+		level.Error(logger).Log("Error starting HTTP server", err.Error())
+	}
 }
