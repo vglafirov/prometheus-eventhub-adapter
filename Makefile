@@ -1,5 +1,5 @@
 VERSION ?= $(shell git describe --always --tags)
-BIN = prometheus-azure-timeseries-adapter
+BIN = prometheus-eventhub-adapter
 BUILD_CMD = go build -o build/$(BIN)-$(VERSION)-$${GOOS}-$${GOARCH} &
 IMAGE_REPO = azurets.azurecr.io
 FMT_CMD = $(gofmt -s -l -w $(find . -type f -name '*.go' -not -path './vendor/*') | tee /dev/stderr)

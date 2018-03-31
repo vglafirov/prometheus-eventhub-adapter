@@ -1,4 +1,4 @@
-package: github.com/vglafirov/prometheus-azure-timeseries-adapter
+package: github.com/vglafirov/prometheus-eventhub-adapter
 import:
 - package: "github.com/google/uuid"
 - package: "github.com/go-kit/kit/log"

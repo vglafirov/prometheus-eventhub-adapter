@@ -22,7 +22,7 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["/go/bin/prometheus-azure-timeseries-adapter"]
+          command: ["/go/bin/prometheus-eventhub-adapter"]
           args:
           - -eventhub-name
           - {{ .Values.eventHub.name }}

@@ -1,7 +1,7 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: {{ template "azure-timeseries-adapter.fullname" . }}
+  name: {{ template "prometheus-eventhub-adapter.fullname" . }}
   labels:
     app: {{ .Chart.Name }}
 spec:

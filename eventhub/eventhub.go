@@ -1,21 +1,20 @@
-package azurets
+package eventhub
 
 import (
 	"encoding/json"
-	"strconv"
 	"time"
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 
-	"github.com/KirillSleta/go-eventhub/eventhub"
+	eh "github.com/KirillSleta/go-eventhub/eventhub"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 )
 
 // Client Azure EventHub client definition
 type Client struct {
-	Sender         eventhub.EventHubClient
+	Sender         eh.EventHubClient
 	HubName        string
 	Logger         log.Logger
 	ignoredSamples prometheus.Counter
@@ -30,7 +29,7 @@ func NewClient(
 	logLevel string,
 	logger log.Logger) (cli *Client, err error) {
 
-	sender := eventhub.NewEventHubClient(1, namespace, sasPolicyName, sasPolicyKey)
+	sender := eh.NewEventHubClient(1, namespace, sasPolicyName, sasPolicyKey)
 
 	return &Client{
 		Sender:  sender,
@@ -49,12 +48,12 @@ func NewClient(
 func (c *Client) Write(samples model.Samples) error {
 	for _, s := range samples {
 		t := model.Time.Time(s.Timestamp)
-		message := make(map[string]string)
+		message := make(map[string]interface{})
 		message["Timestamp"] = t.Format(time.RFC3339)
 		for key, value := range s.Metric {
 			message[string(key)] = string(value)
 		}
-		message["Value"] = strconv.FormatFloat(float64(s.Value), 'f', -1, 64)
+		message["Value"] = float64(s.Value)
 		m, err := json.Marshal(message)
 		if err != nil {
 			level.Error(c.Logger).Log("msg", "Cannot marshal incoming message", "err", err.Error())
@@ -62,7 +61,7 @@ func (c *Client) Write(samples model.Samples) error {
 		}
 
 		level.Debug(c.Logger).Log("msg", "Message", "payload", string(m))
-		err = c.Sender.Send(c.HubName, &eventhub.Message{Body: m})
+		err = c.Sender.Send(c.HubName, &eh.Message{Body: m})
 		if err != nil {
 			level.Error(c.Logger).Log("msg", "Cannot send metrics", "err", err.Error())
 			return err

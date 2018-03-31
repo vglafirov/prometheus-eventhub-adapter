@@ -7,7 +7,7 @@ replicaCount: 1
 restartPolicy: Always
 
 image:
-  repository: azurets.azurecr.io/prometheus-azure-timeseries-adapter
+  repository: azurets.azurecr.io/prometheus-eventhub-adapter
   tag: latest
   pullPolicy: Always
   pullSecret: azurets-acr

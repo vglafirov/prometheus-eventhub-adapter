@@ -1,4 +1,4 @@
 apiVersion: v1
 description: Prometheus Azure Timeseries storage adapter
-name: azure-timeseries-adapter
+name: prometheus-eventhub-adapter
 version: 0.1.0

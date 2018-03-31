@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// The main package for the Prometheus server executable.
+// The main package for the storage adapter
 package main
 
 import (
@@ -31,21 +31,20 @@ import (
 	"github.com/golang/snappy"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
-	"github.com/vglafirov/prometheus-azure-timeseries-adapter/azurets"
+	"github.com/vglafirov/prometheus-eventhub-adapter/eventhub"
 
 	"github.com/prometheus/common/promlog"
 	"github.com/prometheus/prometheus/prompb"
 )
 
 type config struct {
-	eventhubName        string
-	eventhubNamespace   string
-	sasPolicyName       string
-	sasPolicyKey        string
-	tokenExpiryInterval time.Duration
-	logLevel            string
-	telemetryPath       string
-	listenAddr          string
+	eventhubName      string
+	eventhubNamespace string
+	sasPolicyName     string
+	sasPolicyKey      string
+	logLevel          string
+	telemetryPath     string
+	listenAddr        string
 }
 
 var (
@@ -109,10 +108,6 @@ func parseFlags() *config {
 		"Azure EventHub policy key",
 	)
 
-	flag.DurationVar(&cfg.tokenExpiryInterval, "token-expire-interval", 30*time.Second,
-		"Interval in which sas token will be renewed",
-	)
-
 	flag.StringVar(&cfg.listenAddr, "web.listen-address", ":9201", "Address to listen on for web endpoints.")
 	flag.StringVar(&cfg.telemetryPath, "web.telemetry-path", "/metrics", "Address to listen on for web endpoints.")
 
@@ -129,13 +124,13 @@ type writer interface {
 func buildClients(logger log.Logger, cfg *config) ([]writer, error) {
 	var writers []writer
 	level.Info(logger).Log("msg", "Creating client", "method", "buildClients")
-	c, err := azurets.NewClient(
+	c, err := eventhub.NewClient(
 		cfg.eventhubName,
 		cfg.eventhubNamespace,
 		cfg.sasPolicyName,
 		cfg.sasPolicyKey,
 		cfg.logLevel,
-		log.With(logger, "storage", "AzureTS"))
+		log.With(logger, "storage", "AzureEventHub"))
 	if err != nil {
 		level.Error(logger).Log("msg", "Cannot create azurets cli", "err", err.Error())
 		return nil, err
